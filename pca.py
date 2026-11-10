@@ -35,7 +35,7 @@ print(df.head())
 
 # Making a winnings column
 
-    
+# TODO: Make winnings column
 
 # Make holdout dataset for testing the model
 holdout = df[df['season'] == 2022]
