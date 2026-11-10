@@ -53,3 +53,11 @@ Game plan:
 - compute average strokes gained over the entire period for each golfer. Using strokes gained from each
 - Try to predict # of wins, average finish, and winnings. For most events winnings follows a given proportion of purse (e.g. 1st gets 18%, 2nd 10.8%, ties get average between the several positions they cover). I anticipate that purse will be the best metric, but since prizes increase each year I might try to normalize them as a proportion of all prize money.
 - 
+
+
+Determining winnings is annoying, since players who tie 
+
+## Considerations for improvement:
+- Winnings tables are probably different year over year. Shouldn't be too hard to find old ones
+- Newer data could be interesting
+-  
