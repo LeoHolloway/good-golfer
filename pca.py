@@ -1,3 +1,4 @@
+# %%
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -6,7 +7,9 @@ import json
 
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import StandardScaler
 
+# %%
 with open("approx_winnings_percentage.json", "r", encoding="utf-8") as f:
     winnings_rate = json.load(f)
 
@@ -59,13 +62,33 @@ sns.heatmap(player_stats.corr(), annot=True, cmap='coolwarm', ax=ax)
 plt.title('Correlation Heatmap of SG Measurements')
 plt.show()
 
-# SG putting distribution. I anticipate this will be the most important single factor
-fig, ax = plt.subplots(figsize=(10, 6))
-sns.histplot(player_stats['sg_putt'], bins=30, kde=True, ax=ax)
-plt.title('Distribution of SG Putting')
+# SG distributions. I anticipate putting will be the most important single factor
+sg_titles = {
+    'sg_putt': 'SG Putting',
+    'sg_arg': 'SG ARG',
+    'sg_app': 'SG App',
+    'sg_ott': 'SG OTT',
+}
+fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+for ax, (col, title) in zip(axes.flat, sg_titles.items()):
+    sns.histplot(player_stats[col], bins=30, kde=True, ax=ax)
+    ax.set_title(f'Distribution of {title}')
+fig.tight_layout()
+plt.savefig("plots/sg_histograms.png", dpi=300, bbox_inches="tight")
 plt.show()
 
-# TODO: Check distributions of all SG measurements
+# Variances of SG
+print(f"putt {np.var(player_stats['sg_putt'])}")
+print(f"arg {np.var(player_stats['sg_arg'])}")
+print(f"app {np.var(player_stats['sg_app'])}")
+print(f"ott {np.var(player_stats['sg_ott'])}")
+
+# Means of SG. Population mean is 0 by definition
+print(f"putt {np.mean(player_stats['sg_putt'])}")
+print(f"arg {np.mean(player_stats['sg_arg'])}")
+print(f"app {np.mean(player_stats['sg_app'])}")
+print(f"ott {np.mean(player_stats['sg_ott'])}")
+# They're all below 0. Explanation in writeup
 
 pca_full = PCA(n_components=4)
 sg_cols = ['sg_putt', 'sg_arg', 'sg_app', 'sg_ott']
@@ -79,17 +102,37 @@ print(f"pct explained by pca: {np.sum(pca_full.explained_variance_ratio_)}")
 # plot components
 fig, ax = plt.subplots(figsize=(10, 6))
 for i, (pc, loading) in enumerate(loadings.items()):
-    ax.plot(loadings.index, loading, 'o', markersize=10,
+    ax.plot(loadings.index, loading, 'o-', markersize=10,
             label=f'{pc} ({pca_full.explained_variance_ratio_[i]:.0%})')
 
 ax.axhline(0, color='gray', linewidth=0.8)
 ax.set_ylabel('Loading')
 ax.legend()
-plt.title('PCA Loadings by SG Category')
+plt.title('Unscaled PCA Loadings by SG Category')
+plt.savefig("plots/unscaled_pca_loadings.png", dpi=300, bbox_inches="tight")
 plt.show()
 
-# I guess you can never escape level, slope, and curvature. Makes perfect sense I guess.
-# Never seen the fourth order term on a plot but it looks exactly how you'd expect it to.
+
+
+# Scaled version
+scaled_sg = StandardScaler().fit_transform(player_stats[sg_cols])
+pca_scaled = PCA(n_components=4)
+pca_scaled.fit(scaled_sg)
+print(pca_scaled.explained_variance_ratio_)
+scaled_loadings = pd.DataFrame(pca_scaled.components_.T, columns=['PC1', 'PC2', 'PC3', 'PC4'], index=sg_cols)
+
+fig, ax = plt.subplots(figsize=(10, 6))
+for i, (pc, loading) in enumerate(scaled_loadings.items()):
+    ax.plot(scaled_loadings.index, loading, 'o-', markersize=10,
+            label=f'{pc} ({pca_scaled.explained_variance_ratio_[i]:.0%})')
+
+ax.axhline(0, color='gray', linewidth=0.8)
+ax.set_ylabel('Loading')
+ax.legend()
+plt.title('Scaled PCA Loadings by SG Category')
+plt.savefig("plots/scaled_pca_loadings.png", dpi=300, bbox_inches="tight")
+plt.show()
+
 
 # Now with only 3
 pca = PCA(n_components=3)
